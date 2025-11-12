@@ -1,48 +1,59 @@
 """
-Database Schemas
+Database Schemas for VCET AI Chat Application
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model corresponds to a MongoDB collection.
+Collection name is the lowercase of the class name.
 """
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, Literal, List
+from datetime import datetime
 
-from pydantic import BaseModel, Field
-from typing import Optional
-
-# Example schemas (replace with your own):
-
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
+class Users(BaseModel):
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    email: EmailStr = Field(..., description="Unique email")
+    password: str = Field(..., description="Hashed password")
+    is_verified: bool = Field(False)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Conversations(BaseModel):
+    user_id: str = Field(..., description="Owner user ObjectId as string")
+    title: str = Field("New Conversation", max_length=100)
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    message_count: int = 0
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Messages(BaseModel):
+    conversation_id: str = Field(..., description="Conversation ObjectId as string")
+    user_id: Optional[str] = Field(None, description="User ObjectId for user messages")
+    role: Literal['user','assistant']
+    content: str
+    created_at: Optional[datetime] = None
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Shares(BaseModel):
+    share_id: str
+    conversation_id: str
+    user_id: str
+    created_at: Optional[datetime] = None
+    view_count: int = 0
+
+class Liked_messages(BaseModel):
+    user_id: str
+    message_id: str
+    conversation_id: str
+    liked_at: Optional[datetime] = None
+
+class Disliked_messages(BaseModel):
+    user_id: str
+    message_id: str
+    conversation_id: str
+    reason: str
+    feedback_text: Optional[str] = None
+    reported_at: Optional[datetime] = None
+
+class Otp_codes(BaseModel):
+    email: EmailStr
+    otp: str = Field(..., description="Hashed OTP")
+    created_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
